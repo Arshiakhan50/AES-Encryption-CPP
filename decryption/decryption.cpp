@@ -1,6 +1,22 @@
 #include <iostream>
+#include <stdexcept>
+#include <cstring>
+
 
 using namespace std;
+
+class InputException : public runtime_error
+{
+public:
+    InputException(const string &message) : runtime_error(message) {}
+};
+
+// Custom exception for decryption errors
+class DecryptionException : public runtime_error
+{
+public:
+    DecryptionException(const string &message) : runtime_error(message) {}
+};
 
 const int LENGTH = 16; //byte
 const int ROUND = 10;
@@ -233,11 +249,15 @@ void print_in_hex(unsigned char a)
 
 int main()
 {
+    try{
     unsigned char key_in[LENGTH * 2 + 1];
     unsigned char cipher_in[LENGTH * 2 + 1];
 
     cin >> key_in >> cipher_in;
-
+    if (sizeof(key_in) != LENGTH * 2 || sizeof(cipher_in) != LENGTH * 2)
+        {
+            throw InputException("Invalid input length.");
+        }
     unsigned char input[LENGTH];
     unsigned char key[LENGTH], extendedKey[LENGTH * (ROUND + 1)];
 
@@ -247,19 +267,28 @@ int main()
         key[i] = ascii2hex(key_in[i * 2]) * 16 + ascii2hex(key_in[i * 2 + 1]);
     }
 
-    extendKey(key, extendedKey);
+        extendKey(key, extendedKey);
 
-    // for (int i = 0; i < LENGTH * (ROUND + 1); i++)
-    // {
-    //     cout << hex << (unsigned int)(extendedKey[i]) << " ";
-    // }
-    // cout << endl;
+        decrypt(input, extendedKey);
 
-    decrypt(input, extendedKey);
-
-    for (int i = 0; i < LENGTH; i++)
-    {
-        print_in_hex(input[i]);
+        for (int i = 0; i < LENGTH; i++)
+        {
+            print_in_hex(input[i]);
+        }
+        cout << endl;
     }
-    cout << endl;
+    catch (const InputException &ex)
+    {
+        cerr << "Input error: " << ex.what() << endl;
+    }
+    catch (const DecryptionException &ex)
+    {
+        cerr << "Decryption error: " << ex.what() << endl;
+    }
+    catch (const exception &ex)
+    {
+        cerr << "An error occurred: " << ex.what() << endl;
+    }
+
+    return 0;
 }
